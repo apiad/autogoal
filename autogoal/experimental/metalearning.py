@@ -173,7 +173,7 @@ class SolutionInfo:
         return SolutionInfo(**d)
 
 
-class MetalearningSampler(ModelSampler):
+class MetalearningModel:
     """
     Crea un ModelSampler que se inicializa con las distribuciones aprendidas del metalearning.
 
@@ -184,14 +184,14 @@ class MetalearningSampler(ModelSampler):
     DISTRIBUTION_MAP = {cls.__name__: cls for cls in [WeightParam, UnormalizedWeightParam, DistributionParam, MeanDevParam]}
 
     def __init__(self, db="metalearning.json") -> None:
-        super().__init__(self._build_model(db))
+        self.db = db
 
-    def _build_model(self, db):
+    def build_model(self):
         examples: List[SolutionInfo] = []
 
         # Primero se cargan todos los ejemplos de metalearning
 
-        with open(db) as fp:
+        with open(self.db) as fp:
             for line in fp:
                 examples.append(SolutionInfo(**json.loads(line)))
 

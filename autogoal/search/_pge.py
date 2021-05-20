@@ -21,13 +21,14 @@ class PESearch(SearchAlgorithm):
         random_state: Optional[int] = None,
         name: str = None,
         save: bool = False,
+        initial_model : Dict = None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
         self._learning_factor = learning_factor
         self._selection = selection
         self._epsilon_greed = epsilon_greed
-        self._model: Dict = {}
+        self._model: Dict = initial_model or {}
         self._random_states = random.Random(random_state)
         self._name = name or str(time.time())
         self._save = save

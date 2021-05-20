@@ -494,6 +494,9 @@ class WeightParam(ModelParam):
         self.value = value
 
     def update(self, alpha: float, updates) -> "WeightParam":
+        if not updates:
+            return WeightParam(self.value)
+
         new_value = statistics.mean(updates)
         return WeightParam(value=self.value * (1 - alpha) + new_value * alpha)
 
