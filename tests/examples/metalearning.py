@@ -18,4 +18,11 @@ automl = AutoML(
 
 # Crear el logger, necesita el dataset para extraer features del problema
 metalogger = DatasetFeatureLogger(X, y)
-automl.fit(X, y, logger=[metalogger, RichLogger()])
+
+# automl.fit(X, y, logger=metalogger)
+
+"""
+>>> automl.fit(X, y, logger=metalogger)
+"""
+
+# Ahora creamos un MetalearningSampler que aprenderá a samplear de este dataset

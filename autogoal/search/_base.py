@@ -75,7 +75,7 @@ class SearchAlgorithm:
         start_time = time.time()
         seen = set()
 
-        logger.begin(generations, self._pop_size)
+        logger.begin(generations, self._pop_size, self)
 
         try:
             while generations > 0:
@@ -203,7 +203,7 @@ class SearchAlgorithm:
 
 
 class Logger:
-    def begin(self, generations, pop_size):
+    def begin(self, generations, pop_size, search_algorithm):
         pass
 
     def end(self, best, best_fn):
@@ -229,7 +229,7 @@ class Logger:
 
 
 class ConsoleLogger(Logger):
-    def begin(self, generations, pop_size):
+    def begin(self, generations, pop_size, search_algorithm):
         print("Starting search: generations=%i" % generations)
         self.start_time = time.time()
         self.start_generations = generations
@@ -297,7 +297,7 @@ class ConsoleLogger(Logger):
 
 
 class ProgressLogger(Logger):
-    def begin(self, generations, pop_size):
+    def begin(self, generations, pop_size, search_algorithm):
         self.manager = enlighten.get_manager()
         self.pop_counter = self.manager.counter(
             total=pop_size, unit="evals", leave=True, desc="Current Gen"
@@ -328,7 +328,7 @@ class RichLogger(Logger):
         self.console = autogoal.logging.console()
         self.logger = autogoal.logging.logger()
 
-    def begin(self, generations, pop_size):
+    def begin(self, generations, pop_size, search_algorithm):
         self.progress = Progress(console=self.console)
         self.pop_counter = self.progress.add_task("Generation", total=pop_size)
         self.total_counter = self.progress.add_task(

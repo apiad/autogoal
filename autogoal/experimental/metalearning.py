@@ -7,7 +7,8 @@ import collections
 import numpy as np
 
 from typing import List
-from autogoal.search import Logger
+from autogoal.search import Logger, SearchAlgorithm
+from autogoal.grammar import ModelSampler
 from autogoal.utils import nice_repr
 from autogoal import sampling
 
@@ -32,8 +33,15 @@ class DatasetFeatureLogger(Logger):
         self.problem_features = problem_features or {}
         self.environment_features = environment_features or {}
 
-    def begin(self, generations, pop_size):
+    def begin(self, generations, pop_size, search_algorithm: SearchAlgorithm):
         self.dataset_features_ = self.extractor.extract_features(self.X, self.y)
+        self.environment_features.update(
+            evaluation_timeout=search_algorithm._evaluation_timeout,
+            memory_limit=search_algorithm._memory_limit,
+            search_timeout=search_algorithm._search_timeout,
+            generations=generations,
+            pop_size=pop_size,
+        )
 
     def eval_solution(self, solution, fitness):
         if not hasattr(solution, "sampler_"):
@@ -50,7 +58,7 @@ class DatasetFeatureLogger(Logger):
             problem_features=dict(self.dataset_features_, **self.problem_features),
             environment_features=dict(self.environment_features),
             pipeline_features=features,
-            # feature_types=feature_types,
+            feature_types=feature_types,
         ).to_dict()
 
         with open(self.output_file, "a") as fp:
@@ -149,8 +157,8 @@ class SolutionInfo:
         self.problem_features = problem_features
         self.pipeline_features = pipeline_features
         self.environment_features = environment_features
-        self.feature_types = feature_types
         self.fitness = fitness
+        self.feature_types = feature_types
         self.uuid = uuid
 
     def to_dict(self):
@@ -161,98 +169,102 @@ class SolutionInfo:
         return SolutionInfo(**d)
 
 
-class LearnerMedia:
-    def __init__(self, problem, solutions: List[SolutionInfo], beta=1):
-        self.solutions = solutions
-        self.problem = problem
-        self.beta = beta
+class MetalearningSampler(ModelSampler):
+    pass
 
-    def initialize(self):
-        raise NotImplementedError("We need to refactor to not depend on DictVectorizer")
 
-        self.best_fitness = collections.defaultdict(lambda: 0)
-        self.all_features = {}
+# class LearnerMedia:
+#     def __init__(self, problem, solutions: List[SolutionInfo], beta=1):
+#         self.solutions = solutions
+#         self.problem = problem
+#         self.beta = beta
 
-        for i in self.solutions:
-            self.best_fitness[i.uuid] = max(self.best_fitness[i.uuid], i.fitness)
+#     def initialize(self):
+#         raise NotImplementedError("We need to refactor to not depend on DictVectorizer")
 
-            for feature in i.pipeline_features:
-                self.all_features[feature] = None
+#         self.best_fitness = collections.defaultdict(lambda: 0)
+#         self.all_features = {}
 
-        self.vect = DictVectorizer(sparse=False)
-        self.vect.fit([self.problem])
+#         for i in self.solutions:
+#             self.best_fitness[i.uuid] = max(self.best_fitness[i.uuid], i.fitness)
 
-        self.weights_solution = self.calculate_weight_examples(self.solutions)
+#             for feature in i.pipeline_features:
+#                 self.all_features[feature] = None
 
-    def compute_all_features(self):
-        self.initialize()
+#         self.vect = DictVectorizer(sparse=False)
+#         self.vect.fit([self.problem])
 
-        for feature in list(self.all_features):
-            self.all_features[feature] = self.compute_feature(feature)
-            print(feature, "=", self.all_features[feature])
+#         self.weights_solution = self.calculate_weight_examples(self.solutions)
 
-    def compute_feature(self, feature):
-        """Select for training all solutions where is used the especific feature.
+#     def compute_all_features(self):
+#         self.initialize()
 
-        Predict the media of the parameter value.
-        """
-        # find the relevant solutions, that contain the production to predict
-        important_solutions = []
-        feature_prototype = None
+#         for feature in list(self.all_features):
+#             self.all_features[feature] = self.compute_feature(feature)
+#             print(feature, "=", self.all_features[feature])
 
-        for i, w in zip(self.solutions, self.weights_solution):
-            if feature in i.pipeline_features:
-                for value in i.pipeline_features[feature]:
-                    important_solutions.append((value, w))
+#     def compute_feature(self, feature):
+#         """Select for training all solutions where is used the especific feature.
 
-                if feature_prototype is None:
-                    feature_prototype = eval(
-                        i.feature_types[feature], sampling.__dict__, {}
-                    )
+#         Predict the media of the parameter value.
+#         """
+#         # find the relevant solutions, that contain the production to predict
+#         important_solutions = []
+#         feature_prototype = None
 
-        if feature_prototype is None:
-            return None
+#         for i, w in zip(self.solutions, self.weights_solution):
+#             if feature in i.pipeline_features:
+#                 for value in i.pipeline_features[feature]:
+#                     important_solutions.append((value, w))
 
-        return feature_prototype.weighted(important_solutions)
+#                 if feature_prototype is None:
+#                     feature_prototype = eval(
+#                         i.feature_types[feature], sampling.__dict__, {}
+#                     )
 
-    def calculate_weight_examples(self, solutions: List[SolutionInfo]):
-        """Calcule a weight of each example considering the fitness and the similariti with the
-        actual problem
-        """
-        # met = fitness * (similarity)^beta
-        # métrica utilizada en active learning para combinar informativeness with representativeness
+#         if feature_prototype is None:
+#             return None
 
-        weights = []
+#         return feature_prototype.weighted(important_solutions)
 
-        for info in solutions:
-            # normalize fitness
-            info.fitness = self.normalize_fitness(info)
+#     def calculate_weight_examples(self, solutions: List[SolutionInfo]):
+#         """Calcule a weight of each example considering the fitness and the similariti with the
+#         actual problem
+#         """
+#         # met = fitness * (similarity)^beta
+#         # métrica utilizada en active learning para combinar informativeness with representativeness
 
-            if info.fitness == 0:
-                continue
+#         weights = []
 
-            # calculate similarity
-            sim = self.similarity_cosine(info.problem_features)
-            # calculate metric for weight
-            weights.append(info.fitness * (sim) ** self.beta)
+#         for info in solutions:
+#             # normalize fitness
+#             info.fitness = self.normalize_fitness(info)
 
-        return weights
+#             if info.fitness == 0:
+#                 continue
 
-    def normalize_fitness(self, info: SolutionInfo):
-        """Normalize the fitness with respect to the best solution in the problem where that solution is evaluated
-        """
-        return info.fitness / self.best_fitness[info.uuid]
+#             # calculate similarity
+#             sim = self.similarity_cosine(info.problem_features)
+#             # calculate metric for weight
+#             weights.append(info.fitness * (sim) ** self.beta)
 
-    def similarity_cosine(self, other_problem):
-        """Caculate the cosine similarity for a particular solution problem(other problem)
-        and the problem analizing
-        """
-        x = self.vect.transform(other_problem)[0]
-        y = self.vect.transform(self.problem)[0]
+#         return weights
 
-        return np.dot(x, y) / (np.dot(x, x) ** 0.5 * np.dot(y, y) ** 0.5)
+#     def normalize_fitness(self, info: SolutionInfo):
+#         """Normalize the fitness with respect to the best solution in the problem where that solution is evaluated
+#         """
+#         return info.fitness / self.best_fitness[info.uuid]
 
-    def similarity_learning(self, other_problem):
-        """ Implementar una espicie de encoding para los feature de los problemas
-        """
-        raise NotImplementedError()
+#     def similarity_cosine(self, other_problem):
+#         """Caculate the cosine similarity for a particular solution problem(other problem)
+#         and the problem analizing
+#         """
+#         x = self.vect.transform(other_problem)[0]
+#         y = self.vect.transform(self.problem)[0]
+
+#         return np.dot(x, y) / (np.dot(x, x) ** 0.5 * np.dot(y, y) ** 0.5)
+
+#     def similarity_learning(self, other_problem):
+#         """ Implementar una espicie de encoding para los feature de los problemas
+#         """
+#         raise NotImplementedError()
