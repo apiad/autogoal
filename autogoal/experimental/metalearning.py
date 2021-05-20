@@ -5,12 +5,12 @@ import warnings
 import json
 import collections
 import numpy as np
+from pathlib import Path
 
 from typing import List
 from autogoal.search import Logger, SearchAlgorithm
-from autogoal.grammar import ModelSampler
+from autogoal.sampling import ModelSampler
 from autogoal.utils import nice_repr
-from autogoal import sampling
 
 # from sklearn.feature_extraction import DictVectorizer
 
@@ -170,7 +170,17 @@ class SolutionInfo:
 
 
 class MetalearningSampler(ModelSampler):
-    pass
+    def __init__(self, db="metalearning.json") -> None:
+        super().__init__(self._build_model(db))
+
+    def _build_model(self, db):
+        examples = []
+
+        with open(db) as fp:
+            for line in fp:
+                examples.append(json.loads(line))
+
+        print(examples)
 
 
 # class LearnerMedia:
