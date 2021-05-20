@@ -21,8 +21,6 @@ automl = AutoML(
 # Crear el logger, necesita el dataset para extraer features del problema
 metalogger = DatasetFeatureLogger(X, y)
 
-# automl.fit(X, y, logger=metalogger)
-
 """
 >>> automl.fit(X, y, logger=metalogger)
 """
@@ -46,7 +44,7 @@ for k,v in model.items():
 automl = AutoML(
     input=(MatrixContinuousDense, Supervised[VectorCategorical]),
     output=VectorCategorical,
-    search_timeout=600,
+    search_timeout=60,
     evaluation_timeout=5,
     initial_model=model,
 )

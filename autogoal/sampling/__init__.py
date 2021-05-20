@@ -494,6 +494,8 @@ class WeightParam(ModelParam):
         self.value = value
 
     def update(self, alpha: float, updates) -> "WeightParam":
+        updates = [int(u) for u in updates]
+
         if not updates:
             return WeightParam(self.value)
 

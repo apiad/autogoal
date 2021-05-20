@@ -175,7 +175,7 @@ class SolutionInfo:
 
 class MetalearningModel:
     """
-    Crea un ModelSampler que se inicializa con las distribuciones aprendidas del metalearning.
+    Crea un modelo que se inicializa con las distribuciones aprendidas del metalearning.
 
     A partir de los ejemplos en `db`, se re-definen las distribuciones asociadas a cada una
     de las producciones vistas, de forma tal que se asemejen a los mejores pipelines generados.
