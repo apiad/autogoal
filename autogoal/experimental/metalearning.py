@@ -50,7 +50,7 @@ class DatasetFeatureLogger(Logger):
             problem_features=dict(self.dataset_features_, **self.problem_features),
             environment_features=dict(self.environment_features),
             pipeline_features=features,
-            feature_types=feature_types,
+            # feature_types=feature_types,
         ).to_dict()
 
         with open(self.output_file, "a") as fp:
@@ -193,7 +193,7 @@ class LearnerMedia:
 
     def compute_feature(self, feature):
         """Select for training all solutions where is used the especific feature.
-    
+
         Predict the media of the parameter value.
         """
         # find the relevant solutions, that contain the production to predict
@@ -217,7 +217,7 @@ class LearnerMedia:
 
     def calculate_weight_examples(self, solutions: List[SolutionInfo]):
         """Calcule a weight of each example considering the fitness and the similariti with the
-        actual problem 
+        actual problem
         """
         # met = fitness * (similarity)^beta
         # métrica utilizada en active learning para combinar informativeness with representativeness
@@ -244,7 +244,7 @@ class LearnerMedia:
         return info.fitness / self.best_fitness[info.uuid]
 
     def similarity_cosine(self, other_problem):
-        """Caculate the cosine similarity for a particular solution problem(other problem) 
+        """Caculate the cosine similarity for a particular solution problem(other problem)
         and the problem analizing
         """
         x = self.vect.transform(other_problem)[0]
