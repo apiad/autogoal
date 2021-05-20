@@ -403,6 +403,10 @@ class ModelParam(metaclass=abc.ABCMeta):
     def update(self, alpha: float, updates) -> "ModelParam":
         pass
 
+    @abc.abstractclassmethod
+    def build(cls, samples):
+        pass
+
 
 @nice_repr
 class UnormalizedWeightParam(ModelParam):
@@ -412,9 +416,10 @@ class UnormalizedWeightParam(ModelParam):
     def update(self, alpha: float, updates: list) -> "UnormalizedWeightParam":
         return UnormalizedWeightParam(self.value + alpha * sum(updates))
 
-    def weighted(self, solutions):
+    @classmethod
+    def build(cls, samples):
         result = 0
-        for s, w in solutions:
+        for s, w in samples:
             result += s * w
 
         return UnormalizedWeightParam(1 + result)
@@ -434,10 +439,11 @@ class DistributionParam(ModelParam):
 
         return DistributionParam(weights)
 
-    def weighted(self, solutions):
-        weights = [1] * len(self.weights)
+    @classmethod
+    def build(cls, samples):
+        weights = [1] * max([s+1 for s,w in samples])
 
-        for s, w in solutions:
+        for s, w in samples:
             weights[s] += w
 
         return DistributionParam(weights)
@@ -464,21 +470,21 @@ class MeanDevParam(ModelParam):
             initial_params=self.initial_params,
         )
 
-    def weighted(self, solutions):
+    @classmethod
+    def build(self, samples):
         values = np.asarray(
-            [s for s, w in solutions]
-            + [
-                self.initial_params[0] - 2 * self.initial_params[1],
-                self.initial_params[0] + 2 * self.initial_params[1],
-            ]
+            [s for s, w in samples]
         )
-        weights = np.asarray([w for s, w in solutions] + [1, 1])
+        weights = np.asarray([w for s, w in samples])
+
+        if sum(weights) == 0:
+            return MeanDevParam(0, 0)
 
         average = np.average(values, weights=weights)
         variance = np.average((values - average) ** 2, weights=weights)
 
         return MeanDevParam(
-            average, math.sqrt(variance), initial_params=self.initial_params
+            average, math.sqrt(variance)
         )
 
 
@@ -491,9 +497,13 @@ class WeightParam(ModelParam):
         new_value = statistics.mean(updates)
         return WeightParam(value=self.value * (1 - alpha) + new_value * alpha)
 
-    def weighted(self, solutions):
-        values = np.asarray([s for s, w in solutions] + [0, 1])
-        weights = np.asarray([w for s, w in solutions] + [1, 1])
+    @classmethod
+    def build(self, samples):
+        values = np.asarray([s for s, w in samples])
+        weights = np.asarray([w for s, w in samples])
+
+        if sum(weights) == 0:
+            return WeightParam(0.0)
 
         return WeightParam(np.average(values, weights=weights))
 

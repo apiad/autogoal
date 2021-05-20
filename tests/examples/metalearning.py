@@ -12,7 +12,7 @@ X,y = cars.load()
 automl = AutoML(
     input=(MatrixContinuousDense, Supervised[VectorCategorical]),
     output=VectorCategorical,
-    search_timeout=60,
+    search_timeout=600,
     evaluation_timeout=5,
 )
 
