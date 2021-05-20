@@ -1,7 +1,6 @@
 # Primero vamos a loguear de un dataset
 
 from autogoal.sampling import UnormalizedWeightParam
-from autogoal.logging import logger
 from autogoal.ml import AutoML
 from autogoal.kb import MatrixContinuousDense, VectorCategorical, Supervised
 from autogoal.experimental.metalearning import DatasetFeatureLogger, MetalearningModel
