@@ -5,7 +5,14 @@ import collections
 
 from typing import Dict, List
 from autogoal.search import Logger, SearchAlgorithm
-from autogoal.sampling import ModelSampler, MeanDevParam, UnormalizedWeightParam, WeightParam, DistributionParam, ModelParam
+from autogoal.sampling import (
+    ModelSampler,
+    MeanDevParam,
+    UnormalizedWeightParam,
+    WeightParam,
+    DistributionParam,
+    ModelParam,
+)
 from autogoal.utils import nice_repr
 
 # from sklearn.feature_extraction import DictVectorizer
@@ -49,7 +56,9 @@ class DatasetFeatureLogger(Logger):
         sampler = solution.sampler_
 
         features = {k: v for k, v in sampler._updates.items() if isinstance(k, str)}
-        feature_types = {k: v.__class__.__name__ for k, v in sampler._model.items() if k in features}
+        feature_types = {
+            k: v.__class__.__name__ for k, v in sampler._model.items() if k in features
+        }
 
         info = SolutionInfo(
             uuid=self.run_id,
@@ -176,7 +185,15 @@ class MetalearningModel:
     de las producciones vistas, de forma tal que se asemejen a los mejores pipelines generados.
     """
 
-    DISTRIBUTION_MAP = {cls.__name__: cls for cls in [WeightParam, UnormalizedWeightParam, DistributionParam, MeanDevParam]}
+    DISTRIBUTION_MAP = {
+        cls.__name__: cls
+        for cls in [
+            WeightParam,
+            UnormalizedWeightParam,
+            DistributionParam,
+            MeanDevParam,
+        ]
+    }
 
     def __init__(self, db="metalearning.json") -> None:
         self.db = db
@@ -204,7 +221,9 @@ class MetalearningModel:
             best_fitness[pipeline.uuid] = pipeline.fitness
 
             if pipeline.uuid not in similarity:
-                similarity[pipeline.uuid] = self._get_problem_similarity(pipeline.problem_features)
+                similarity[pipeline.uuid] = self._get_problem_similarity(
+                    pipeline.problem_features
+                )
 
         for pipeline in examples:
             bf = best_fitness[pipeline.uuid]
@@ -220,10 +239,10 @@ class MetalearningModel:
         distribution_values = collections.defaultdict(list)
 
         for pipeline in examples:
-            for k,t in pipeline.feature_types.items():
+            for k, t in pipeline.feature_types.items():
                 distribution_types[k] = self.DISTRIBUTION_MAP[t]
 
-            for d,values in pipeline.pipeline_features.items():
+            for d, values in pipeline.pipeline_features.items():
                 for v in values:
                     distribution_values[d].append((v, pipeline.fitness))
 
@@ -231,11 +250,11 @@ class MetalearningModel:
         # conjunto de samples ponderados (método `ModelParams.build`).
 
         distributions = {
-            k: cls.build(distribution_values[k]) for k,cls in distribution_types.items()
+            k: cls.build(distribution_values[k])
+            for k, cls in distribution_types.items()
         }
 
         return distributions
-
 
     def _get_problem_similarity(self, problem_features: dict):
         # TODO: Calcular similar con el problema actual

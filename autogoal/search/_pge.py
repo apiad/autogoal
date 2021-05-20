@@ -21,7 +21,7 @@ class PESearch(SearchAlgorithm):
         random_state: Optional[int] = None,
         name: str = None,
         save: bool = False,
-        initial_model : Dict = None,
+        initial_model: Dict = None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)

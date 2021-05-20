@@ -8,7 +8,7 @@ from autogoal.search import RichLogger
 
 from autogoal.datasets import cars
 
-X,y = cars.load()
+X, y = cars.load()
 
 automl = AutoML(
     input=(MatrixContinuousDense, Supervised[VectorCategorical]),
@@ -32,7 +32,7 @@ model = MetalearningModel().build_model()
 # Veamos que aprendió el modelo. Aquellos algoritmos que mejor resultados hayan dado
 # deben tener pesos mayores:
 
-for k,v in model.items():
+for k, v in model.items():
     if isinstance(v, UnormalizedWeightParam):
         print(k, v.value)
 

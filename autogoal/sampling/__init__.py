@@ -441,7 +441,7 @@ class DistributionParam(ModelParam):
 
     @classmethod
     def build(cls, samples):
-        weights = [1] * max([s+1 for s,w in samples])
+        weights = [1] * max([s + 1 for s, w in samples])
 
         for s, w in samples:
             weights[s] += w
@@ -472,9 +472,7 @@ class MeanDevParam(ModelParam):
 
     @classmethod
     def build(self, samples):
-        values = np.asarray(
-            [s for s, w in samples]
-        )
+        values = np.asarray([s for s, w in samples])
         weights = np.asarray([w for s, w in samples])
 
         if sum(weights) == 0:
@@ -483,9 +481,7 @@ class MeanDevParam(ModelParam):
         average = np.average(values, weights=weights)
         variance = np.average((values - average) ** 2, weights=weights)
 
-        return MeanDevParam(
-            average, math.sqrt(variance)
-        )
+        return MeanDevParam(average, math.sqrt(variance))
 
 
 @nice_repr
