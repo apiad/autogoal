@@ -26,3 +26,6 @@ metalogger = DatasetFeatureLogger(X, y)
 """
 
 # Ahora creamos un MetalearningSampler que aprenderá a samplear de este dataset
+from autogoal.experimental.metalearning import MetalearningSampler
+
+sampler = MetalearningSampler()
